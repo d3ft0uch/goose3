@@ -72,13 +72,14 @@ class ImageExtractor(BaseExtractor):
         if image:
             return image
 
+        image = self.check_meta_tag()
+        if image:
+            return image
+
         image = self.check_large_images(top_node, 0, 0)
         if image:
             return image
 
-        image = self.check_meta_tag()
-        if image:
-            return image
         return Image()
 
     def check_meta_tag(self):
