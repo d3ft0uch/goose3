@@ -179,6 +179,7 @@ class Configuration(object):
         # extraction information
         self._local_storage_path = os.path.join(tempfile.gettempdir(), 'goose')
         self._known_context_patterns = KNOWN_ARTICLE_CONTENT_PATTERNS[:]
+        self._known_context_patterns_exclude = []
         self._known_publish_date_tags = KNOWN_PUBLISH_DATE_TAGS[:]
         self._known_author_patterns = KNOWN_AUTHOR_PATTERNS[:]
         self._target_language = 'en'
@@ -245,6 +246,45 @@ class Configuration(object):
             self._known_context_patterns.insert(0, val)
         elif isinstance(val, dict):
             self._known_context_patterns.insert(0, create_pat_from_dict(val))
+        else:
+            raise Exception("Unknown type: {}. Use a ArticleContextPattern.".format(type(val)))
+
+    @property
+    def known_context_patterns_exclude(self):
+        ''' list: The context patterns to search to find the likely article content
+
+            Note:
+                Each entry must be a dictionary with the following keys: `attr` and `value` \
+                or just `tag`
+        '''
+        return self._known_context_patterns_exclude
+
+    @known_context_patterns_exclude.setter
+    def known_context_patterns_exclude(self, val):
+
+        def create_pat_from_dict(val):
+            if "tag" in val:
+                pat = ArticleContextPattern(tag=val["tag"])
+                if "attr" in val:
+                    pat.attr = val["attr"]
+                    pat.value = val["value"]
+            elif "attr" in val:
+                pat = ArticleContextPattern(attr=val["attr"], value=val["value"])
+
+            if "domain" in val:
+                pat.domain = val["domain"]
+
+            return pat
+
+        if isinstance(val, list):
+            self._known_context_patterns_exclude = [
+                                               x if isinstance(x, ArticleContextPattern) else create_pat_from_dict(x)
+                                               for x in val
+                                           ] + self._known_context_patterns_exclude
+        elif isinstance(val, ArticleContextPattern):
+            self._known_context_patterns_exclude.insert(0, val)
+        elif isinstance(val, dict):
+            self._known_context_patterns_exclude.insert(0, create_pat_from_dict(val))
         else:
             raise Exception("Unknown type: {}. Use a ArticleContextPattern.".format(type(val)))
 

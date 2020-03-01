@@ -65,7 +65,18 @@ class DocumentCleaner(object):
         self.twitter_re = "[^-]twitter"
         self.tablines_replacements = ReplaceSequence().create("\n", "\n\n").append("\t").append("^\\s+$")
 
+    def remove_nodes_config(self, doc_to_clean):
+        for item in self.config.known_context_patterns_exclude:
+            if item.domain and self.article.domain.replace('www.', '') != item.domain:
+                continue
+            for t in self.parser.getElementsByTag(doc_to_clean, tag=item.tag,
+                                                  attr=item.attr, value=item.value):
+                self.parser.remove(t)
+
+        return doc_to_clean
+
     def clean(self, doc_to_clean):
+        doc_to_clean = self.remove_nodes_config(doc_to_clean)
         doc_to_clean = self.clean_body_classes(doc_to_clean)
         doc_to_clean = self.clean_article_tags(doc_to_clean)
         doc_to_clean = self.clean_em_tags(doc_to_clean)
@@ -186,7 +197,7 @@ class DocumentCleaner(object):
                 kid_text_node = kid
                 kid_text = self.parser.getText(kid)
                 replace_text = self.tablines_replacements.replaceAll(kid_text)
-                if(len(replace_text)) > 1:
+                if (len(replace_text)) > 1:
                     previous_sibling_node = self.parser.previousSibling(kid_text_node)
                     while (previous_sibling_node is not None and self.parser.getTag(previous_sibling_node) == "a" and
                            self.parser.getAttribute(previous_sibling_node, 'grv-usedalready') != 'yes'):
